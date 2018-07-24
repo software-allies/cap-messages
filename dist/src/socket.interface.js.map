@@ -1,0 +1,1 @@
+{"version":3,"file":"socket.interface.js","sourceRoot":"","sources":["../../src/socket.interface.ts"],"names":[],"mappings":"","sourcesContent":["export interface Socket {\r\n    on(event: string, callback: (data: any) => void ): any;\r\n    emit(event: string, data: any): any;\r\n  }"]}
