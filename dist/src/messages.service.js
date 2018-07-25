@@ -2,12 +2,12 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { ConfigService } from './config.service';
-import * as Io from 'socket.io-client';
+import * as io from 'socket.io-client';
 var MessagesService = /** @class */ (function () {
     function MessagesService(configService, _http) {
         this.configService = configService;
         this._http = _http;
-        this.socket = Io(configService.wsUrl);
+        this.socket = io(configService.wsUrl);
         this.headers = new HttpHeaders();
         this.headers.set("Content-Type", "application/json; charset=UTF-8");
         this.headers.set('Authentication', localStorage.getItem('_token') || '');

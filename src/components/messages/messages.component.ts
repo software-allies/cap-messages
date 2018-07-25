@@ -8,7 +8,9 @@ import { Subscription } from 'rxjs';
 @Component({
     selector: "msg-app",
     template: `
-
+<ion-grid>
+   <ion-row>
+     <ion-col  col-12 col-xl-8 offset-xl-2 col-lg-10 offset-lg-1>
         <ion-list>
             <ion-item *ngFor="let _message of _messages">
                 <strong>{{_message.nickname}}</strong>: {{_message.message}}
@@ -34,6 +36,9 @@ import { Subscription } from 'rxjs';
 
             </form>
         </ion-list>
+     </ion-col>
+   </ion-row>
+ </ion-grid>
         `,
     styles: [``],
   encapsulation: ViewEncapsulation.Emulated

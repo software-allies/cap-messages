@@ -5,12 +5,13 @@ import { Observable } from 'rxjs/Observable';
 import { Observer } from 'rxjs/Observer';
 import { map, catchError } from 'rxjs/operators';
 import { ConfigService } from './config.service';
-import * as socketIo from 'socket.io-client';
+// import * as socketIo from 'socket.io-client';
 import { Socket } from './socket.interface';
 import { MessageInterface } from './message.interface';
 
+import * as io from 'socket.io-client';
 
-declare var io : {
+declare var _io : {
   connect(url: string): Socket;
 };
 
@@ -27,7 +28,7 @@ export class MessagesService {
     private configService: ConfigService,
     private _http: HttpClient){
 
-    this.socket = socketIo(configService.wsUrl);
+    this.socket = io(configService.wsUrl);
 
     this.headers = new HttpHeaders();
     this.headers.set("Content-Type", "application/json; charset=UTF-8");
