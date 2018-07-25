@@ -9,8 +9,13 @@ import { ConfigService } from './config.service';
 import { Socket } from './socket.interface';
 import { MessageInterface } from './message.interface';
 
+// En código inicial estaba como (as socketIo) se cambió por (io)
 import * as io from 'socket.io-client';
 
+// Esto es un hack para que funcione rollup
+var ioFunc = (io as any).default ? (io as any).default : io;
+ 
+// Esto era lo que original estaba antes del hack (io en vez de _io)
 declare var _io : {
   connect(url: string): Socket;
 };
@@ -28,7 +33,8 @@ export class MessagesService {
     private configService: ConfigService,
     private _http: HttpClient){
 
-    this.socket = io(configService.wsUrl);
+    // Después de aplicar hack se cambio de (socketIo a ioFunc)
+    this.socket = ioFunc(configService.wsUrl);
 
     this.headers = new HttpHeaders();
     this.headers.set("Content-Type", "application/json; charset=UTF-8");

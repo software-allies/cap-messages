@@ -3,11 +3,14 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { ConfigService } from './config.service';
 import * as io from 'socket.io-client';
+// Esto es un hack para que funcione rollup
+var ioFunc = io.default ? io.default : io;
 var MessagesService = /** @class */ (function () {
     function MessagesService(configService, _http) {
         this.configService = configService;
         this._http = _http;
-        this.socket = io(configService.wsUrl);
+        // Después de aplicar hack se cambio de (socketIo a ioFunc)
+        this.socket = ioFunc(configService.wsUrl);
         this.headers = new HttpHeaders();
         this.headers.set("Content-Type", "application/json; charset=UTF-8");
         this.headers.set('Authentication', localStorage.getItem('_token') || '');

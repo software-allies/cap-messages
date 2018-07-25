@@ -1,0 +1,30 @@
+{
+    "name": "cap-messages",
+    "version": "0.0.1",
+    "description": "WebSocket IO Messages for a CAP generated application",
+    "main": "bundles/capstoragecloudinary.umd.js",
+    "module": "index.js",
+    "typings": "index.d.ts",
+    "keywords": [
+        "cap",
+        "realtime",
+        "messages",
+        "socket.io",
+        "websockets"
+    ],
+    "author": "SoftwareAllies",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/software-allies/cap-messages.git"
+    },
+    "peerDependencies": {
+        "@angular/core": "^5.2.11"
+    },
+    "dependencies": {
+        "@cloudinary/angular-5.x": "^1.0.2",
+        "cloudinary-core": "^2.5.0",
+        "ng2-file-upload": "^1.3.0"
+    }
+}
+ 
