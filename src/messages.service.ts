@@ -3,22 +3,20 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Response } from '@angular/http';
 import { Observable } from 'rxjs/Observable';
 import { Observer } from 'rxjs/Observer';
-import { map, catchError } from 'rxjs/operators';
+import 'rxjs/add/operator/map';
+import 'rxjs/add/operator/catch';
 import { ConfigService } from './config.service';
-// import * as socketIo from 'socket.io-client';
+import * as io from 'socket.io-client';
 import { Socket } from './socket.interface';
 import { MessageInterface } from './message.interface';
-
-// En código inicial estaba como (as socketIo) se cambió por (io)
-import * as io from 'socket.io-client';
 
 // Esto es un hack para que funcione rollup
 var ioFunc = (io as any).default ? (io as any).default : io;
  
 // Esto era lo que original estaba antes del hack (io en vez de _io)
-declare var _io : {
-  connect(url: string): Socket;
-};
+// declare var _io : {
+//   connect(url: string): Socket;
+// };
 
 @Injectable()
 export class MessagesService {
@@ -55,7 +53,7 @@ export class MessagesService {
   getMessages() : Observable<string[]> {
 
       return this._http.get(`${this.apiUrl}messages`, { headers: this.headers })
-          .map((response: Response) => response)
+          .map((response: any) => response)
           .catch(this.handleError);
   }
 

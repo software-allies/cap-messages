@@ -1,8 +1,8 @@
 {
     "name": "cap-messages",
-    "version": "0.0.2",
+    "version": "0.0.3",
     "description": "WebSocket IO Messages for a CAP generated application",
-    "main": "bundles/capstoragecloudinary.umd.js",
+    "main": "bundles/capmessages.umd.js",
     "module": "index.js",
     "typings": "index.d.ts",
     "keywords": [

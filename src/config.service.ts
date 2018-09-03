@@ -13,7 +13,7 @@ export class ConfigService {
     constructor(@Optional() config: ConfigService) {
         if (config) { 
             this.wsUrl = config.wsUrl;
-            this.wsUrl = config.apiUrl;
+            this.apiUrl = config.apiUrl;
         }
     }
 
