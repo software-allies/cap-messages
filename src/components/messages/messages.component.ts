@@ -75,25 +75,22 @@ export class MessagesComponent {
             });
 
         this.sub = this.messageService.subscribeMessages()
-            .subscribe(message => {
-                console.log('message', message);
-                this._messages.push(message);
+            .subscribe((message) => {
+                if(this._messages.indexOf(message) < 0){
+                    this._messages.push(message);
+                }
             });
     }
 
     ngOnDestroy() {
-        this.sub.unsubscribe();
+        //this.sub.unsubscribe();
     }
 
     onSubmit() {
-        this.messageService.sendMessage(this.message)
-            .subscribe(result => {
-                console.log('onSubmit result', result);
-            });
+        this.messageService.sendMessage(this.message);
         this.message.message = '';
         // this.send.emit(this.message);
     }
 
 
 }
-

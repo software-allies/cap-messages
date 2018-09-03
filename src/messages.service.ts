@@ -41,13 +41,13 @@ export class MessagesService {
     this.apiUrl = configService.apiUrl;
   }
 
-  sendMessage(message: MessageInterface): Observable<any> {
+  sendMessage(message: MessageInterface): void {
 
       this.socket.emit('clientmessage', message);
-      
-      return this._http.post(`${this.apiUrl}messages`, message, { headers: this.headers })
-          .map((response: Response) => response)
-          .catch(this.handleError);
+      //Here we send the message
+      // return this._http.post(`${this.apiUrl}messages`, message, { headers: this.headers })
+      //     .map((response: Response) => response)
+      //     .catch(this.handleError);
   }
   
   getMessages() : Observable<string[]> {
@@ -60,6 +60,10 @@ export class MessagesService {
   subscribeMessages() : Observable<string> {
 
     this.socket.on('message', (res) => {
+      this.observerMessage.next(res.msg);
+    });
+
+    this.socket.on('getMessages', (res) => {
       this.observerMessage.next(res.msg);
     });
 
