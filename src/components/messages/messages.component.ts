@@ -269,8 +269,8 @@ export class MessagesContactPage {
             <form [formGroup]="privateFormGroup" (ngSubmit)="logPrint()">
                 <ion-row>
                     <ion-col col-10>
-                        <ion-input text-wrap class="private-message-input" type="text" placeholder="Type a message" [(ngModel)]="privateMessage"
-                            formControlName="privateMessage" ngDefaultControl text-wrap></ion-input>
+                    <ion-input class="private-message-input" type="text" placeholder="Type a message" [(ngModel)]="privateMessage"
+                        formControlName="privateMessage" id="privateMessage" ngDefaultControl></ion-input>
                     </ion-col>
                     <ion-col col-2>
                         <ion-buttons end>
@@ -305,6 +305,7 @@ export class PrivateMessageModal implements OnInit {
     }
 
     logPrint(){
+        //dark souls reference
         console.log('Here, Here, Warm, Warm give me soft');
     }
 
