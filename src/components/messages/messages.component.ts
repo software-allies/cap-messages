@@ -67,8 +67,10 @@ import { NavController, NavParams, ModalController, ViewController, Content } fr
 export class MessagesComponent {
     @ViewChild(Content) content: Content;
     offStatus:boolean = false;
-    _messages: string[] = [];
-    sub: Subscription;
+    _messages: any[] = [];
+    clickCounter = 0;
+    socket: any;
+    subscribe: Subscription = new Subscription;
 
     @Output()
     send: EventEmitter<any> = new EventEmitter();
@@ -82,44 +84,54 @@ export class MessagesComponent {
 
     constructor(
         private messageService: MessagesService,
-        public formBuilder: FormBuilder, private navCtrl: NavController) {
-            setTimeout(() => {
-                if(this.offStatus === false){
-                    this.content.scrollToBottom(300);
-                }
-            }, 850);
+        private formBuilder: FormBuilder, 
+        private navCtrl: NavController) {
+        
+        this.socket = this.messageService.getSocketObject();
+        this.scrollDown();
     }
 
     ngOnInit(): any {
+
         this.messagesform = this.formBuilder.group({
             nickname: ['', [Validators.required, Validators.minLength(3)]],
             message: ['', Validators.required]
         });
 
+        //Gets the messages from loopback
         this.messageService.getMessages()
             .subscribe(result => {
                 this._messages = result;
             });
-
-        this.sub = this.messageService.subscribeMessages()
-            .subscribe(message => {
-                console.log('message', message);
-                this._messages.push(message);
-            });
+        //Save messages from socked.io, new_message
+        this.subscribe = this.messageService.newMessage().subscribe(new_message => {
+            this._messages.push(new_message);
+        });
     }
 
     ngOnDestroy() {
-        this.sub.unsubscribe();
+        this.subscribe.unsubscribe();
     }
 
-    onSubmit() {
-        this.messageService.sendMessage(this.message)
-            .subscribe(result => {
-                console.log('onSubmit result', result);
-            });
-        this.message.message = '';
-        // this.send.emit(this.message);
+    scrollDown(){
+        setTimeout(() => {
+            if(this.offStatus === false){
+                this.content.scrollToBottom(300);
+            }
+        }, 850);
     }
+
+    //This sends the messages to socked.io and loopback
+    onSubmit() {
+        this.messageService.sendMessage(this.message);
+
+        this.messageService.saveToDB(this.message)
+        .subscribe(result => {
+            console.log('onSubmit result', result);
+        });
+        this.message.message = '';
+    }
+
 
     lookPerson() {
         this.navCtrl.push(MessagesContactPage, JSON.stringify(this.getUsers()));
@@ -269,8 +281,8 @@ export class MessagesContactPage {
             <form [formGroup]="privateFormGroup" (ngSubmit)="logPrint()">
                 <ion-row>
                     <ion-col col-10>
-                    <ion-input class="private-message-input" type="text" placeholder="Type a message" [(ngModel)]="privateMessage"
-                        formControlName="privateMessage" id="privateMessage" ngDefaultControl></ion-input>
+                        <ion-input class="private-message-input" type="text" placeholder="Type a message" [(ngModel)]="privateMessage"
+                            formControlName="privateMessage" id="privateMessage" ngDefaultControl></ion-input>
                     </ion-col>
                     <ion-col col-2>
                         <ion-buttons end>
@@ -305,7 +317,6 @@ export class PrivateMessageModal implements OnInit {
     }
 
     logPrint(){
-        //dark souls reference
         console.log('Here, Here, Warm, Warm give me soft');
     }
 
