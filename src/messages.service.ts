@@ -41,32 +41,49 @@ export class MessagesService {
     this.apiUrl = configService.apiUrl;
   }
 
-  sendMessage(message: MessageInterface): Observable<any> {
+  sendMessage(message: MessageInterface){
+      //Here sends a message y saves that message in loopback
+      this.socket.emit('send message', message);
+  }
+  
+  newMessage(){
+    let observable = new Observable(observer => {
+        this.socket.on('new message', (data: MessageInterface) => {
+            observer.next(data);
+        });
+    });
+    return observable;
+  }
 
-      this.socket.emit('clientmessage', message);
-      
-      return this._http.post(`${this.apiUrl}messages`, message, { headers: this.headers })
-          .map((response: Response) => response)
-          .catch(this.handleError);
+  saveToDB(message: MessageInterface): Observable<any> {
+    return this._http.post(`${this.apiUrl}messages`, message, { headers: this.headers })
+        .map((response: Response) => response)
+        .catch(this.handleError);
   }
   
   getMessages() : Observable<string[]> {
-
+      //Here gets the messages from loopback
+      //io.connect();
       return this._http.get(`${this.apiUrl}messages`, { headers: this.headers })
           .map((response: any) => response)
           .catch(this.handleError);
   }
 
-  subscribeMessages() : Observable<string> {
-
-    this.socket.on('message', (res) => {
-      this.observerMessage.next(res.msg);
-    });
-
-    this.socket.emit('clientdata', 'Joined to chat');
-
-    return this.createObservableString();
+  getSocketObject() : Socket {
+    return this.socket;
   }
+
+  //Get messages for socked.io
+  // subscribeMessages() : Observable<string> {
+  //   //Here storage the messages
+  //   this.socket.on('new message', (res) => {
+  //     this.observerMessage.next(res);
+  //   });
+  //   //Here sends the request for the messages
+  //   //this.socket.emit('new user', 'Victor');
+
+  //   return this.createObservableString();
+  // }
 
   createObservableString() : Observable<string> {
       return new Observable<string>(observer => {
