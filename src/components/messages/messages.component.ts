@@ -1,6 +1,7 @@
 import { Component, Output, EventEmitter, ViewEncapsulation, ViewChild, OnInit } from '@angular/core'; 
 import { FormGroup, FormBuilder, FormControl, Validators } from "@angular/forms";
 import { MessagesService } from '../../messages.service';
+import { UserInterface } from '../../user.interface';
 import { MessageInterface } from '../../message.interface';
 import { Subscription } from 'rxjs';
 import { NavController, NavParams, ModalController, ViewController, Content } from 'ionic-angular';
@@ -16,47 +17,72 @@ import { NavController, NavParams, ModalController, ViewController, Content } fr
     template: 
     `
     <ion-header [className]="'tool-bar'">
-        <ion-toolbar >
-            <ion-title>Send a message to...</ion-title>
+        <ion-toolbar>
+            <ion-title *ngIf="logged === true">Send a message to...</ion-title>
+            <ion-title *ngIf="logged === false">Login...</ion-title>            
             <ion-buttons end>
-            <button ion-button icon-only color="royal" (click)="lookPerson()">
-                <ion-icon color="primary" name="chatboxes"></ion-icon>
-            </button>
+                <button ion-button icon-only color="royal" *ngIf="logged === true" (click)="lookPerson()">
+                    <ion-icon color="primary" name="chatboxes"></ion-icon>
+                </button>
             </ion-buttons>
         </ion-toolbar>
     </ion-header>
 
     <ion-content no-padding style="margin-top: -18px;">
         <ion-grid>
+            <ion-row *ngIf="logged === false" align-items: center>
+                <ion-col col-12 col-xl-8 offset-xl-2 col-lg-10>
+                    <form [formGroup]="registerForm" (ngSubmit)="onCreateUser()">
+                        <ion-list>
+                            <ion-item>
+                                <ion-label stacked>Username</ion-label>
+                                <ion-input type="text" [(ngModel)]="userLogged.username" formControlName="username" ngDefaultControl></ion-input>
+                            </ion-item>
 
-            <ion-row align-items: center>
-            <ion-col col-12 col-xl-8 offset-xl-2 col-lg-10>
-            <ion-list>
-                <ion-item *ngFor="let _message of _messages">
-                    <strong>{{_message.nickname}}</strong>: <span text-wrap> {{_message.message}} </span>
-                </ion-item>
-            </ion-list>
+                            <ion-item>
+                                <ion-label stacked>Avatar</ion-label>
+                                <ion-input type="text" [(ngModel)]="userLogged.avatar" formControlName="avatar" ngDefaultControl></ion-input>
+                            </ion-item>
 
-            <ion-list>
-                <form [formGroup]="messagesform" (ngSubmit)="onSubmit()">
+                            <ion-item>
+                                <ion-label stacked>Status</ion-label>
+                                <ion-input type="text" [(ngModel)]="userLogged.status" formControlName="status" ngDefaultControl></ion-input>
+                            </ion-item>
 
-                <ion-item>
-                    <ion-label stacked primary>Nickname</ion-label>
-                    <ion-input [(ngModel)]="message.nickname" formControlName="nickname"
-                            type="text" id="nickname" spellcheck="false" autocapitalize="off" ngDefaultControl>
-                    </ion-input>
-                </ion-item>
-                <ion-item>
-                    <ion-label stacked primary>Message</ion-label>
-                    <ion-input [(ngModel)]="message.message" formControlName="message" type="text" id="message" ngDefaultControl>
-                    </ion-input>
-                </ion-item>
+                        </ion-list>
+                        <button ion-button type="submit" block [disabled]="!registerForm.valid">Sign In</button>
+                    </form>
+                </ion-col>
+            </ion-row>
 
-                <button ion-button type="submit" block primary [disabled]="!messagesform.valid">Send</button>
+            <ion-row *ngIf="logged  === true" align-items: center>
+                <ion-col col-12 col-xl-8 offset-xl-2 col-lg-10>
+                    <ion-list>
+                        <ion-item *ngFor="let _message of _messages">
+                            <strong>{{_message.nickname}}</strong>: <span text-wrap> {{_message.message}} </span>
+                        </ion-item>
+                    </ion-list>
 
-                </form>
-            </ion-list>
-            </ion-col>
+                    <ion-list>
+                        <form [formGroup]="messagesform" (ngSubmit)="onSubmit()">
+
+                            <ion-item>
+                                <ion-label stacked primary>Nickname</ion-label>
+                                <ion-input [(ngModel)]="message.nickname" formControlName="nickname"
+                                        type="text" id="nickname" spellcheck="false" autocapitalize="off" ngDefaultControl>
+                                </ion-input>
+                            </ion-item>
+                            <ion-item>
+                                <ion-label stacked primary>Message</ion-label>
+                                <ion-input [(ngModel)]="message.message" formControlName="message" type="text" id="message" ngDefaultControl>
+                                </ion-input>
+                            </ion-item>
+
+                            <button ion-button type="submit" block primary [disabled]="!messagesform.valid">Send</button>
+
+                        </form>
+                    </ion-list>
+                </ion-col>
         </ion-row>
         </ion-grid>
     </ion-content>
@@ -66,21 +92,30 @@ import { NavController, NavParams, ModalController, ViewController, Content } fr
 
 export class MessagesComponent {
     @ViewChild(Content) content: Content;
+    messagesform: FormGroup;
+    registerForm: FormGroup;
     offStatus:boolean = false;
     _messages: any[] = [];
+    _users: any[] = [];
     clickCounter = 0;
     socket: any;
-    subscribe: Subscription = new Subscription;
+    subscribeMessages: Subscription = new Subscription;
+    subscribeUsers: Subscription = new Subscription;
+    logged = false;
 
     @Output()
     send: EventEmitter<any> = new EventEmitter();
+
+    userLogged: UserInterface = {
+        username: '',
+        avatar: '',
+        status: ''
+    };
 
     message: MessageInterface = { 
         nickname: '', 
         message: '' 
     };
-
-    messagesform: FormGroup;
 
     constructor(
         private messageService: MessagesService,
@@ -88,10 +123,15 @@ export class MessagesComponent {
         private navCtrl: NavController) {
         
         this.socket = this.messageService.getSocketObject();
-        this.scrollDown();
     }
 
     ngOnInit(): any {
+
+        this.registerForm = this.formBuilder.group({
+            username: ['', Validators.required],
+            avatar: ['', Validators.required],
+            status: ['', Validators.required]
+        });
 
         this.messagesform = this.formBuilder.group({
             nickname: ['', [Validators.required, Validators.minLength(3)]],
@@ -104,13 +144,15 @@ export class MessagesComponent {
                 this._messages = result;
             });
         //Save messages from socked.io, new_message
-        this.subscribe = this.messageService.newMessage().subscribe(new_message => {
+        this.subscribeMessages = this.messageService.newMessage().subscribe(new_message => {
             this._messages.push(new_message);
         });
-    }
 
-    ngOnDestroy() {
-        this.subscribe.unsubscribe();
+        //Save users
+        this.subscribeUsers = this.messageService.getUsers().subscribe(users => {
+            this._users = users
+            console.log(this._users);
+        });
     }
 
     scrollDown(){
@@ -132,28 +174,48 @@ export class MessagesComponent {
         this.message.message = '';
     }
 
-
-    lookPerson() {
-        this.navCtrl.push(MessagesContactPage, JSON.stringify(this.getUsers()));
+    login() {
+        this.logged = true;
     }
 
-    getUsers() {
+    onCreateUser() {
+        console.log(this.userLogged);
+        this.messageService.newUser(this.userLogged);
+        this.logged = true;
+        this.scrollDown();
+    }
+
+
+    lookPerson() {
+        this.navCtrl.push(MessagesContactPage, JSON.stringify(this._users));
+    }
+
+    getUsers2() {
         return [
         {
-            'name':'Victor',
-            'img':'https://s3.amazonaws.com/uploads.hipchat.com/photos/5728599/4uvLUShzmIhGfCK.gif',
+            'username':'Victor',
+            'avatar':'https://s3.amazonaws.com/uploads.hipchat.com/photos/5728599/4uvLUShzmIhGfCK.gif',
             'status': 'Helloooo!'
         },
         {
-            'name':'Javier',
-            'img':'https://media.giphy.com/media/100QWMdxQJzQC4/giphy.gif',
+            'username':'Javier',
+            'avatar':'https://media.giphy.com/media/100QWMdxQJzQC4/giphy.gif',
             'status': 'Let\'s eat'
         },
         {
-            'name': 'Lenin',
-            'img': 'https://media.giphy.com/media/52FJFpMVfK6BKeeoYD/giphy.gif',
-            'status': 'Sound, sound, sound'
+            'username': 'Lenin',
+            'avatar': 'https://media.giphy.com/media/52FJFpMVfK6BKeeoYD/giphy.gif',
+            'status': 'Sound, sound, sound!'
         }];
+    }
+
+    getUsers() {
+        return this._users;
+    }
+
+    ngOnDestroy() {
+        this.subscribeMessages.unsubscribe();
+        this.subscribeUsers.unsubscribe();
     }
 
 }
@@ -183,9 +245,9 @@ export class MessagesComponent {
             <button ion-item>
                 <ion-item style="background: rgba(0,0,0,0);">
                     <ion-avatar item-start>
-                        <img [src]="user.img">
+                        <img [src]="user.avatar">
                     </ion-avatar>
-                    <h2>{{ user.name }}</h2>
+                    <h2>{{ user.username }}</h2>
                     <p>{{ user.status }}</p>
                 </ion-item>
             </button>
@@ -210,7 +272,7 @@ export class MessagesContactPage {
         const modal = this.modalCtrl.create(PrivateMessageModal, {
             user
         });
-        console.log(user);
+        console.log('This is', user);
         modal.present();
     }
     
