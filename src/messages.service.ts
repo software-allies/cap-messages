@@ -28,7 +28,7 @@ export class MessagesService {
   apiUrl: string;
 
   constructor(
-    private configService: ConfigService,
+    public configService: ConfigService,
     private _http: HttpClient){
 
     // Después de aplicar hack se cambio de (socketIo a ioFunc)
@@ -46,7 +46,7 @@ export class MessagesService {
       this.socket.emit('send message', message);
   }
   
-  newMessage(){
+  newMessage(): Observable<any>{
     let observable = new Observable(observer => {
         this.socket.on('new message', (data: MessageInterface) => {
             observer.next(data);
@@ -54,6 +54,19 @@ export class MessagesService {
     });
     return observable;
   }
+
+  newUser(user: Object) {
+    this.socket.emit('new user', user);
+  }
+
+  getUsers(): Observable<any>{
+    let observable = new Observable(observer => {
+      this.socket.on('get users', (data: string[]) => {
+        observer.next(data);
+      });
+    });
+    return observable;
+  } 
 
   saveToDB(message: MessageInterface): Observable<any> {
     return this._http.post(`${this.apiUrl}messages`, message, { headers: this.headers })
