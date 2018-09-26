@@ -6,9 +6,9 @@ This module is divided in two main codes, which are the main code of the module 
 **Note**: Please use the branch *feature/reconfiguration-loopback-local-storage*, because this is still in development and the code have received significant changes since I accepted to develop this module, like a significant decrease in the complexity of the algorithm.
 
 ## Features:
-- Authentication service.
+- [ ] Authentication service.
 - [x] General messages in real time.
 - [x] List of users connected.
-- Private messages in real time.
+- [ ] Private messages in real time.
 
 At this moment this is still in development.
