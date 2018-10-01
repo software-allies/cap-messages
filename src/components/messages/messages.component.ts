@@ -5,6 +5,7 @@ import { UserInterface } from '../../user.interface';
 import { MessageInterface } from '../../message.interface';
 import { Subscription } from 'rxjs';
 import { NavController, NavParams, ModalController, ViewController, Content } from 'ionic-angular';
+import { RegisterComponent } from '../register/register.component';
 
 @Component({
     selector: "msg-app",
@@ -51,7 +52,8 @@ import { NavController, NavParams, ModalController, ViewController, Content } fr
 
                         </ion-list>
                         <button ion-button type="submit" block [disabled]="!registerForm.valid">Sign In</button>
-                    </form>
+                        </form>
+                        <button ion-button color="light" block (click)="registerUser()">Register</button>
                 </ion-col>
             </ion-row>
 
@@ -65,13 +67,6 @@ import { NavController, NavParams, ModalController, ViewController, Content } fr
 
                     <ion-list>
                         <form [formGroup]="messagesform" (ngSubmit)="onSubmit()">
-
-                            <ion-item>
-                                <ion-label stacked primary>Nickname</ion-label>
-                                <ion-input [(ngModel)]="message.nickname" formControlName="nickname"
-                                        type="text" id="nickname" spellcheck="false" autocapitalize="off" ngDefaultControl>
-                                </ion-input>
-                            </ion-item>
                             <ion-item>
                                 <ion-label stacked primary>Message</ion-label>
                                 <ion-input [(ngModel)]="message.message" formControlName="message" type="text" id="message" ngDefaultControl>
@@ -134,7 +129,6 @@ export class MessagesComponent {
         });
 
         this.messagesform = this.formBuilder.group({
-            nickname: ['', [Validators.required, Validators.minLength(3)]],
             message: ['', Validators.required]
         });
 
@@ -150,7 +144,7 @@ export class MessagesComponent {
 
         //Save users
         this.subscribeUsers = this.messageService.getUsers().subscribe(users => {
-            this._users = users
+            this._users = users;
             console.log(this._users);
         });
     }
@@ -178,10 +172,15 @@ export class MessagesComponent {
         this.logged = true;
     }
 
+    registerUser() {
+        this.navCtrl.push(RegisterComponent);
+    }
+
     onCreateUser() {
         console.log(this.userLogged);
         this.messageService.newUser(this.userLogged);
         this.logged = true;
+        this.message.nickname = this.userLogged.username;
         this.scrollDown();
     }
 
@@ -310,9 +309,9 @@ export class MessagesContactPage {
         <ion-toolbar>
             <ion-item class="ion-item-header" no-lines>
                 <ion-avatar item-start>
-                    <img [src]="user.img">
+                    <img [src]="user.avatar">
                 </ion-avatar>
-                <h2 style="font-size: 20px">{{ user.name }}</h2>
+                <h2 style="font-size: 20px">{{ user.username }}</h2>
             </ion-item>
                 
             <ion-buttons end>
@@ -329,9 +328,9 @@ export class MessagesContactPage {
             <button ion-item>
                 <ion-item style="background: rgba(0,0,0,0);">
                     <ion-avatar item-start>
-                        <img [src]="user.img">
+                        <img [src]="user.avatar">
                     </ion-avatar>
-                    <h2>{{ user.name }}</h2>
+                    <h2>{{ user.username }}</h2>
                     <p>{{ user.status }}</p>
                 </ion-item>
             </button>
