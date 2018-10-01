@@ -7,10 +7,12 @@ import { IonicModule } from 'ionic-angular';
 import { ConfigService } from './config.service';
 import { MessagesService } from './messages.service';
 import { MessagesComponent } from './components/messages/messages.component';
+import { RegisterComponent } from './components/register/register.component';
 
 @NgModule({
   declarations: [
     MessagesComponent,
+    RegisterComponent
   ],
   imports: [
     IonicModule,
@@ -22,7 +24,8 @@ import { MessagesComponent } from './components/messages/messages.component';
     HttpClientModule,
     ReactiveFormsModule,
     CommonModule,
-    MessagesComponent
+    MessagesComponent,
+    RegisterComponent
   ],
   providers: [
     MessagesService
