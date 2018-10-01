@@ -9,6 +9,7 @@ import { ConfigService } from './config.service';
 import * as io from 'socket.io-client';
 import { Socket } from './socket.interface';
 import { MessageInterface } from './message.interface';
+import { UserDataInterface } from './components/register/userData.interface';
 
 // Esto es un hack para que funcione rollup
 var ioFunc = (io as any).default ? (io as any).default : io;
@@ -66,7 +67,15 @@ export class MessagesService {
       });
     });
     return observable;
-  } 
+  }
+
+  //registerComponent
+  saveUsersToDB(user: UserDataInterface): Observable<any> {
+    console.log(user);
+    return this._http.post(`${this.apiUrl}users`, user, { headers: this.headers })
+        .map((response: Response) => response)
+        .catch(this.handleError);
+  }
 
   saveToDB(message: MessageInterface): Observable<any> {
     return this._http.post(`${this.apiUrl}messages`, message, { headers: this.headers })
@@ -85,18 +94,6 @@ export class MessagesService {
   getSocketObject() : Socket {
     return this.socket;
   }
-
-  //Get messages for socked.io
-  // subscribeMessages() : Observable<string> {
-  //   //Here storage the messages
-  //   this.socket.on('new message', (res) => {
-  //     this.observerMessage.next(res);
-  //   });
-  //   //Here sends the request for the messages
-  //   //this.socket.emit('new user', 'Victor');
-
-  //   return this.createObservableString();
-  // }
 
   createObservableString() : Observable<string> {
       return new Observable<string>(observer => {
