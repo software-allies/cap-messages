@@ -33,7 +33,7 @@ import { RegisterComponent } from '../register/register.component';
         <ion-grid>
             <ion-row *ngIf="logged === false" align-items: center>
                 <ion-col col-12 col-xl-8 offset-xl-2 col-lg-10>
-                    <form [formGroup]="registerForm" (ngSubmit)="onCreateUser()">
+                    <form [formGroup]="loginForm" (ngSubmit)="onCreateUser()">
                         <ion-list>
                             <ion-item>
                                 <ion-label stacked>Username</ion-label>
@@ -51,7 +51,7 @@ import { RegisterComponent } from '../register/register.component';
                             </ion-item>
 
                         </ion-list>
-                        <button ion-button type="submit" block [disabled]="!registerForm.valid">Sign In</button>
+                        <button ion-button type="submit" block [disabled]="!loginForm.valid">Sign In</button>
                         </form>
                         <button ion-button color="light" block (click)="registerUser()">Register</button>
                 </ion-col>
@@ -88,7 +88,7 @@ import { RegisterComponent } from '../register/register.component';
 export class MessagesComponent {
     @ViewChild(Content) content: Content;
     messagesform: FormGroup;
-    registerForm: FormGroup;
+    loginForm: FormGroup;
     offStatus:boolean = false;
     _messages: any[] = [];
     _users: any[] = [];
@@ -122,7 +122,7 @@ export class MessagesComponent {
 
     ngOnInit(): any {
 
-        this.registerForm = this.formBuilder.group({
+        this.loginForm = this.formBuilder.group({
             username: ['', Validators.required],
             avatar: ['', Validators.required],
             status: ['', Validators.required]
