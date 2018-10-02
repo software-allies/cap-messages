@@ -1,9 +1,8 @@
-import { Component, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation, Output, EventEmitter } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms'
 import { AlertController } from 'ionic-angular';
 import { UserDataInterface } from './userData.interface';
 import { MessagesService } from '../../messages.service';
-import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-register',
@@ -66,7 +65,6 @@ import { Subscription } from 'rxjs';
   encapsulation: ViewEncapsulation.Emulated
 })
 export class RegisterComponent implements OnInit {
-  messageService: MessagesService;
   registerForm: FormGroup;
   userData: UserDataInterface = {
     username: '',
@@ -76,8 +74,10 @@ export class RegisterComponent implements OnInit {
   };
   confirm_password = '';
 
-  constructor(private formBuilder: FormBuilder, 
-    public alertCtrl: AlertController) { 
+  constructor(
+    private formBuilder: FormBuilder, 
+    public alertCtrl: AlertController, 
+    private messageService: MessagesService) { 
   }
 
   ngOnInit(): any { 
@@ -90,7 +90,7 @@ export class RegisterComponent implements OnInit {
     });
   }
 
-  onCreateUser(): any {
+  onCreateUser() {
     if(this.userData.password !== this.confirm_password){
       const alert = this.alertCtrl.create({
         title: 'Wrong password!',
@@ -104,11 +104,10 @@ export class RegisterComponent implements OnInit {
         subTitle: 'Account successfully created.',
         buttons: ['OK']
       });
-      console.log(this.userData);
-      // this.messageService.saveUsersToDB(this.userData)
-      //   .subscribe(result => {
-      //       console.log('onSubmit result', result);
-      // });
+      this.messageService.saveUsersToDB(this.userData)
+        .subscribe(result => {
+            console.log('User created', result);
+      });
       alert.present();
     }
   }
