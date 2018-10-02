@@ -72,7 +72,7 @@ export class MessagesService {
   //registerComponent
   saveUsersToDB(user: UserDataInterface): Observable<any> {
     console.log(user);
-    return this._http.post(`${this.apiUrl}users`, user, { headers: this.headers })
+    return this._http.post(`${this.apiUrl}Users`, user, { headers: this.headers })
         .map((response: Response) => response)
         .catch(this.handleError);
   }
