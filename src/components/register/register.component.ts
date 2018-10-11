@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewEncapsulation, Output, EventEmitter } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms'
 import { AlertController } from 'ionic-angular';
-import { UserDataInterface } from './userData.interface';
+import { UserInterface } from '../../user.interface';
 import { MessagesService } from '../../messages.service';
 
 @Component({
@@ -66,7 +66,7 @@ import { MessagesService } from '../../messages.service';
 })
 export class RegisterComponent implements OnInit {
   registerForm: FormGroup;
-  userData: UserDataInterface = {
+  userData: UserInterface = {
     username: '',
     email: '',
     avatar: '',
