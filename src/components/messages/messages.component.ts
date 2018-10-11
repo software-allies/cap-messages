@@ -91,12 +91,14 @@ export class MessagesComponent {
     loginForm: FormGroup;
     offStatus:boolean = false;
     _messages: any[] = [];
-    _users: any[] = [];
-    clickCounter = 0;
+    _users: UserInterface[] = [];
+    myID: string;
     socket: any;
     subscribeMessages: Subscription = new Subscription;
     subscribeUsers: Subscription = new Subscription;
+    subscribeId: Subscription = new Subscription;
     logged = false;
+    
 
     @Output()
     send: EventEmitter<any> = new EventEmitter();
@@ -106,6 +108,13 @@ export class MessagesComponent {
         avatar: '',
         status: ''
     };
+
+    userInformation: temporal = {
+        id: '',
+        userId: '',
+        created: '',
+        ttl: ''
+    }
 
     message: MessageInterface = { 
         nickname: '', 
@@ -138,15 +147,22 @@ export class MessagesComponent {
                 this._messages = result;
             });
         //Save messages from socked.io, new_message
-        this.subscribeMessages = this.messageService.newMessage().subscribe(new_message => {
-            this._messages.push(new_message);
-        });
+        this.subscribeMessages = this.messageService.newMessage()
+            .subscribe(new_message => {
+                this._messages.push(new_message);
+            });
 
         //Save users
-        this.subscribeUsers = this.messageService.getUsers().subscribe(users => {
-            this._users = users;
-            console.log(this._users);
-        });
+        this.subscribeUsers = this.messageService.getUsers()
+            .subscribe(users => {
+                this._users = users;
+                console.log(this._users);
+            });
+        //This works to get the user id
+        this.subscribeId = this.messageService.getUserId()
+            .subscribe(id => {
+                this.myID = id;
+            });
     }
 
     scrollDown(){
@@ -177,35 +193,29 @@ export class MessagesComponent {
     }
 
     onCreateUser() {
+        this.userLogged.id = this.myID;
         console.log(this.userLogged);
         this.messageService.newUser(this.userLogged);
         this.logged = true;
         this.message.nickname = this.userLogged.username;
         this.scrollDown();
+        // this.messageService.loginUser(this.userData)
+        // .subscribe(result => {
+        //     console.log("user login: ", result);
+        //     this.userInformation = result;
+        // });
+        // this.messageService.getUserInformation({userId: this.userInformation.id, id: this.userInformation.id})
+        //     .subscribe(result => {
+        //         console.log("user data: ", result);
+        // });
+        //this.message.nickname = 'Static';
     }
 
 
     lookPerson() {
-        this.navCtrl.push(MessagesContactPage, JSON.stringify(this._users));
-    }
-
-    getUsers2() {
-        return [
-        {
-            'username':'Victor',
-            'avatar':'https://s3.amazonaws.com/uploads.hipchat.com/photos/5728599/4uvLUShzmIhGfCK.gif',
-            'status': 'Helloooo!'
-        },
-        {
-            'username':'Javier',
-            'avatar':'https://media.giphy.com/media/100QWMdxQJzQC4/giphy.gif',
-            'status': 'Let\'s eat'
-        },
-        {
-            'username': 'Lenin',
-            'avatar': 'https://media.giphy.com/media/52FJFpMVfK6BKeeoYD/giphy.gif',
-            'status': 'Sound, sound, sound!'
-        }];
+        console.log('This is my id', this.myID);
+        this.navCtrl.push(MessagesContactPage, { users: JSON.stringify(this._users), userLogged: this.userLogged });
+        this.subscribeId.unsubscribe();
     }
 
     getUsers() {
@@ -215,9 +225,17 @@ export class MessagesComponent {
     ngOnDestroy() {
         this.subscribeMessages.unsubscribe();
         this.subscribeUsers.unsubscribe();
+        this.subscribeId.unsubscribe();
     }
 
 }
+
+export interface temporal {
+    userId: string,
+    id: string,
+    created: string,
+    ttl: string
+};
 
 @Component({
     selector: 'messages-contact-page',
@@ -257,21 +275,25 @@ export class MessagesComponent {
   })
 export class MessagesContactPage { 
 
-    users: any;
+    users: UserInterface;
+    userLogged: UserInterface;
     // 
     constructor(
         public navCtrl: NavController, 
         public navParams: NavParams,
         public modalCtrl: ModalController,) 
     {
-        this.users = JSON.parse(navParams.data);
+        this.users = JSON.parse(navParams.get('users'));
+        this.userLogged = navParams.get('userLogged');
+        console.log('Users Array: ', this.users);
+        console.log('this user logged: ', this.userLogged);
     }
 
     presentModal(user: string) {
         const modal = this.modalCtrl.create(PrivateMessageModal, {
-            user
+            to: user,
+            from: this.userLogged 
         });
-        console.log('This is', user);
         modal.present();
     }
     
@@ -335,6 +357,13 @@ export class MessagesContactPage {
                 </ion-item>
             </button>
         </ion-card>
+
+        <ion-list>
+            <ion-item *ngFor="let _message of _messages">
+                <strong>{{_message.nickname}}</strong>: <span text-wrap> {{_message.message}} </span>
+            </ion-item>
+        </ion-list>
+
     </ion-content>
 
     <ion-footer class="private-message-footer">
@@ -360,15 +389,27 @@ export class MessagesContactPage {
     `
 })
 export class PrivateMessageModal implements OnInit {
-    user: any;
+    user: UserInterface;
+    userLogged: UserInterface;
     privateMessage: string;
     privateFormGroup: FormGroup;
+    _messages: MessageInterface[] = [];
+    messagesLoading = true;
 
-    constructor(public navParams: NavParams, 
+
+    message: MessageInterface = {
+        nickname: '',
+        message: ''
+    };
+
+    constructor(
+        public navParams: NavParams, 
         public viewCtrl: ViewController,
-        public formBuilder: FormBuilder
-    ) {
-        this.user = this.navParams.get('user');
+        public formBuilder: FormBuilder) {
+            this.user = this.navParams.get('to');
+            console.log('To: ', this.user);
+            this.userLogged = this.navParams.get('from');
+            console.log('From: ', this.userLogged);
     }
 
     ngOnInit(): any{
@@ -379,6 +420,7 @@ export class PrivateMessageModal implements OnInit {
 
     logPrint(){
         console.log('Here, Here, Warm, Warm give me soft');
+        console.log(this.user.id);
     }
 
     dismiss() {
@@ -386,4 +428,3 @@ export class PrivateMessageModal implements OnInit {
     }
 
 }
-
