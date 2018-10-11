@@ -9,7 +9,6 @@ import { ConfigService } from './config.service';
 import * as io from 'socket.io-client';
 import { Socket } from './socket.interface';
 import { MessageInterface } from './message.interface';
-import { UserDataInterface } from './components/register/userData.interface';
 
 // Esto es un hack para que funcione rollup
 var ioFunc = (io as any).default ? (io as any).default : io;
@@ -69,12 +68,33 @@ export class MessagesService {
     return observable;
   }
 
+  getUserId(): Observable<any>{
+    this.socket.emit('getMyId', 'id');
+    let observable = new Observable(observer =>{
+      this.socket.on('getId', (data: string) => {
+        observer.next(data);
+      });
+    });
+    return observable;
+  }
+
   //registerComponent
-  saveUsersToDB(user: UserDataInterface): Observable<any> {
-    console.log(user);
+  saveUsersToDB(user: Object): Observable<any> {
     return this._http.post(`${this.apiUrl}Users`, user, { headers: this.headers })
-        .map((response: Response) => response)
-        .catch(this.handleError);
+      .map((response: Response) => response)
+      .catch(this.handleError);
+  }
+
+  loginUser(user: Object): Observable<any>{
+    return this._http.post(`${this.apiUrl}Users/login`, user, { headers: this.headers})
+      .map((response: Response) => response)
+      .catch(this.handleError);
+  }
+
+  getUserInformation(user: Object): Observable<any>{
+    return this._http.post(`${this.apiUrl}Users`, user, { headers: this.headers})
+    .map((response: Response) => response)
+    .catch(this.handleError);
   }
 
   saveToDB(message: MessageInterface): Observable<any> {
