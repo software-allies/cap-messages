@@ -9,6 +9,7 @@ import { ConfigService } from './config.service';
 import * as io from 'socket.io-client';
 import { Socket } from './socket.interface';
 import { MessageInterface } from './message.interface';
+import { PrivateMessagesInterface } from './privateMessages.interface';
 
 // Esto es un hack para que funcione rollup
 var ioFunc = (io as any).default ? (io as any).default : io;
@@ -85,12 +86,13 @@ export class MessagesService {
       .catch(this.handleError);
   }
 
+  /* not used */
   loginUser(user: Object): Observable<any>{
     return this._http.post(`${this.apiUrl}Users/login`, user, { headers: this.headers})
       .map((response: Response) => response)
       .catch(this.handleError);
   }
-
+  /* not used */
   getUserInformation(user: Object): Observable<any>{
     return this._http.post(`${this.apiUrl}Users`, user, { headers: this.headers})
     .map((response: Response) => response)
@@ -107,6 +109,18 @@ export class MessagesService {
       //Here gets the messages from loopback
       //io.connect();
       return this._http.get(`${this.apiUrl}messages`, { headers: this.headers })
+          .map((response: any) => response)
+          .catch(this.handleError);
+  }
+
+  /* This is for private messages feature */
+  sendPrivateMessage(PrivateMessages: PrivateMessagesInterface) {
+
+  }
+
+  //This is not finished
+  getRooms() : Observable<string[]> {
+    return this._http.get(`${this.apiUrl}privateMessages`, { headers: this.headers })
           .map((response: any) => response)
           .catch(this.handleError);
   }
