@@ -3,6 +3,7 @@ import { FormGroup, FormBuilder, FormControl, Validators } from "@angular/forms"
 import { MessagesService } from '../../messages.service';
 import { UserInterface } from '../../user.interface';
 import { MessageInterface } from '../../message.interface';
+import { PrivateMessagesInterface } from '../../privateMessages.interface';
 import { Subscription } from 'rxjs';
 import { NavController, NavParams, ModalController, ViewController, Content } from 'ionic-angular';
 import { RegisterComponent } from '../register/register.component';
@@ -108,13 +109,6 @@ export class MessagesComponent {
         avatar: '',
         status: ''
     };
-
-    userInformation: temporal = {
-        id: '',
-        userId: '',
-        created: '',
-        ttl: ''
-    }
 
     message: MessageInterface = { 
         nickname: '', 
@@ -230,13 +224,6 @@ export class MessagesComponent {
 
 }
 
-export interface temporal {
-    userId: string,
-    id: string,
-    created: string,
-    ttl: string
-};
-
 @Component({
     selector: 'messages-contact-page',
     styles: [`
@@ -331,9 +318,9 @@ export class MessagesContactPage {
         <ion-toolbar>
             <ion-item class="ion-item-header" no-lines>
                 <ion-avatar item-start>
-                    <img [src]="user.avatar">
+                    <img [src]="receiver.avatar">
                 </ion-avatar>
-                <h2 style="font-size: 20px">{{ user.username }}</h2>
+                <h2 style="font-size: 20px">{{ receiver.username }}</h2>
             </ion-item>
                 
             <ion-buttons end>
@@ -350,16 +337,16 @@ export class MessagesContactPage {
             <button ion-item>
                 <ion-item style="background: rgba(0,0,0,0);">
                     <ion-avatar item-start>
-                        <img [src]="user.avatar">
+                        <img [src]="receiver.avatar">
                     </ion-avatar>
-                    <h2>{{ user.username }}</h2>
-                    <p>{{ user.status }}</p>
+                    <h2>{{ receiver.username }}</h2>
+                    <p>{{ receiver.status }}</p>
                 </ion-item>
             </button>
         </ion-card>
 
         <ion-list>
-            <ion-item *ngFor="let _message of _messages">
+            <ion-item *ngFor="let _message of private_messages">
                 <strong>{{_message.nickname}}</strong>: <span text-wrap> {{_message.message}} </span>
             </ion-item>
         </ion-list>
@@ -389,38 +376,60 @@ export class MessagesContactPage {
     `
 })
 export class PrivateMessageModal implements OnInit {
-    user: UserInterface;
+    receiver: UserInterface;
     userLogged: UserInterface;
     privateMessage: string;
     privateFormGroup: FormGroup;
-    _messages: MessageInterface[] = [];
+    private_messages: PrivateMessagesInterface[] = [];
     messagesLoading = true;
+    roomsArray = ['rooms'];
 
-
-    message: MessageInterface = {
-        nickname: '',
-        message: ''
+    message: PrivateMessagesInterface = {
+        room: '',
+        messages: []
     };
 
     constructor(
         public navParams: NavParams, 
         public viewCtrl: ViewController,
-        public formBuilder: FormBuilder) {
-            this.user = this.navParams.get('to');
-            console.log('To: ', this.user);
+        public formBuilder: FormBuilder,
+        private messageService: MessagesService) {
+            this.receiver = this.navParams.get('to');
+            console.log('To: ', this.receiver);
             this.userLogged = this.navParams.get('from');
             console.log('From: ', this.userLogged);
+            this.checkRoom(this.userLogged.username, this.receiver.username);
     }
 
     ngOnInit(): any{
         this.privateFormGroup = this.formBuilder.group({
             privateMessage:['', Validators.required]
         });
+
+        this.messageService.getRooms()
+            .subscribe(result => {
+                this.roomsArray = result;
+            });
     }
 
     logPrint(){
-        console.log('Here, Here, Warm, Warm give me soft');
-        console.log(this.user.id);
+        console.log('receiver: ', this.receiver.id);
+        console.log('sender', this.userLogged.id);
+        console.log('Message: ', this.privateMessage);
+        
+        this.privateMessage = '';
+    }
+
+    checkRoom(sender: string, receiver: string){
+        if(this.roomsArray.indexOf(`${sender}&${receiver}`)) {
+            this.message.room = `${sender}&${receiver}`;
+        }else if(this.roomsArray.indexOf(`${receiver}&${sender}`)){
+            this.message.room = `${receiver}&${sender}`;
+        }else {
+            this.message.room = `${sender}&${receiver}`;
+        }
+        //Create a new room in the data base and add it to the roomArray
+        console.log('this is the room', this.message.room);
     }
 
     dismiss() {
