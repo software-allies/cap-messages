@@ -1,4 +1,8 @@
 export interface PrivateMessagesInterface {
   room?: string;
-  messages?: Array<object>;
+  message?: string;
+  idFrom?: string;
+  idTo?: string;
+  idSockedTo?: string;
+  idSockedFrom?: string;
 }
