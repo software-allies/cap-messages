@@ -1,5 +1,5 @@
 import { Component, Output, EventEmitter, ViewEncapsulation, ViewChild, OnInit } from '@angular/core'; 
-import { FormGroup, FormBuilder, FormControl, Validators } from "@angular/forms";
+import { FormGroup, FormBuilder, Validators } from "@angular/forms";
 import { MessagesService } from '../../messages.service';
 import { UserInterface } from '../../user.interface';
 import { MessageInterface } from '../../message.interface';
@@ -38,17 +38,17 @@ import { RegisterComponent } from '../register/register.component';
                         <ion-list>
                             <ion-item>
                                 <ion-label stacked>Username</ion-label>
-                                <ion-input type="text" [(ngModel)]="userLogged.username" formControlName="username" ngDefaultControl></ion-input>
+                                <ion-input type="text" block [(ngModel)]="userLogged.username" formControlName="username" ngDefaultControl></ion-input>
                             </ion-item>
 
                             <ion-item>
                                 <ion-label stacked>Avatar</ion-label>
-                                <ion-input type="text" [(ngModel)]="userLogged.avatar" formControlName="avatar" ngDefaultControl></ion-input>
+                                <ion-input type="text" block [(ngModel)]="userLogged.avatar" formControlName="avatar" ngDefaultControl></ion-input>
                             </ion-item>
 
                             <ion-item>
                                 <ion-label stacked>Status</ion-label>
-                                <ion-input type="text" [(ngModel)]="userLogged.status" formControlName="status" ngDefaultControl></ion-input>
+                                <ion-input type="text" block [(ngModel)]="userLogged.status" formControlName="status" ngDefaultControl></ion-input>
                             </ion-item>
 
                         </ion-list>
@@ -154,9 +154,11 @@ export class MessagesComponent {
             });
         //This works to get the user id
         this.subscribeId = this.messageService.getUserId()
-            .subscribe(id => {
-                this.myID = id;
-            });
+        .subscribe(id => {
+            this.myID = id;
+        });
+        //Add all the rooms
+        this.messageService.receiveRooms();
     }
 
     scrollDown(){
@@ -188,7 +190,6 @@ export class MessagesComponent {
 
     onCreateUser() {
         this.userLogged.id = this.myID;
-        console.log(this.userLogged);
         this.messageService.newUser(this.userLogged);
         this.logged = true;
         this.message.nickname = this.userLogged.username;
@@ -355,7 +356,7 @@ export class MessagesContactPage {
 
     <ion-footer class="private-message-footer">
         <ion-grid>
-            <form [formGroup]="privateFormGroup" (ngSubmit)="logPrint()">
+            <form [formGroup]="privateFormGroup" (ngSubmit)="onSubmitPrivateMessage()">
                 <ion-row>
                     <ion-col col-10>
                         <ion-input class="private-message-input" type="text" placeholder="Type a message" [(ngModel)]="privateMessage"
@@ -386,7 +387,9 @@ export class PrivateMessageModal implements OnInit {
 
     message: PrivateMessagesInterface = {
         room: '',
-        messages: []
+        message: '',
+        idFrom: '',
+        idTo: ''
     };
 
     constructor(
@@ -399,6 +402,7 @@ export class PrivateMessageModal implements OnInit {
             this.userLogged = this.navParams.get('from');
             console.log('From: ', this.userLogged);
             this.checkRoom(this.userLogged.username, this.receiver.username);
+            console.log('Rooms available: ', this.messageService.localArrayRooms);
     }
 
     ngOnInit(): any{
@@ -406,30 +410,53 @@ export class PrivateMessageModal implements OnInit {
             privateMessage:['', Validators.required]
         });
 
+        // Not used at this point
         this.messageService.getRooms()
             .subscribe(result => {
                 this.roomsArray = result;
+                //console.log('These are the rooms available: ', this.roomsArray);
             });
+        this.message.idTo = this.receiver.username;
+        this.message.idFrom = this.userLogged.username;
+        this.message.idSockedTo = this.receiver.id;
+        this.message.idSockedFrom = this.userLogged.id;
+        this.messageService.sendPrivateInvitation(this.message);
+
     }
 
-    logPrint(){
-        console.log('receiver: ', this.receiver.id);
-        console.log('sender', this.userLogged.id);
-        console.log('Message: ', this.privateMessage);
-        
+    onSubmitPrivateMessage(){
+        this.message.message = this.privateMessage;
+        this.messageService.savePrivateMessageToDB(this.message)
+        .subscribe(result => {
+            console.log('onSubmitPrivate result', result);
+        });
         this.privateMessage = '';
     }
 
     checkRoom(sender: string, receiver: string){
-        if(this.roomsArray.indexOf(`${sender}&${receiver}`)) {
-            this.message.room = `${sender}&${receiver}`;
-        }else if(this.roomsArray.indexOf(`${receiver}&${sender}`)){
-            this.message.room = `${receiver}&${sender}`;
-        }else {
-            this.message.room = `${sender}&${receiver}`;
+        let formatRoom = `${sender}&${receiver}`;
+        if(typeof this.messageService.localArrayRooms !== 'undefined' && this.messageService.localArrayRooms.length > 0){
+            if(this.messageService.localArrayRooms.indexOf(formatRoom) >= 0) {
+                console.log('f1');
+                this.message.room = formatRoom;
+            }else if(this.messageService.localArrayRooms.indexOf(`${receiver}&${sender}`) >= 0){
+                this.message.room = `${receiver}&${sender}`;
+                console.log('f2');
+            }else {
+                console.log('f3');
+                this.message.room = formatRoom;
+                this.messageService.localArrayRooms.push(this.message.room);
+                console.log('saved', this.messageService.localArrayRooms);
+                this.messageService.userJoinTo(this.message.room);
+            }
+        }else{
+            console.log('f4');
+            this.message.room = formatRoom;
+            this.messageService.localArrayRooms.push(this.message.room);
+            console.log('saved', this.messageService.localArrayRooms);
+            this.messageService.userJoinTo(this.message.room);
         }
         //Create a new room in the data base and add it to the roomArray
-        console.log('this is the room', this.message.room);
     }
 
     dismiss() {
