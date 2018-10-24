@@ -27,6 +27,9 @@ export class MessagesService {
   observerMessage: Observer<string>;
   headers: HttpHeaders;
   apiUrl: string;
+  localArrayRooms: Array<string> = [];
+  count = 1;
+  checked = false;
 
   constructor(
     public configService: ConfigService,
@@ -68,7 +71,7 @@ export class MessagesService {
     });
     return observable;
   }
-
+  
   getUserId(): Observable<any>{
     this.socket.emit('getMyId', 'id');
     let observable = new Observable(observer =>{
@@ -114,8 +117,10 @@ export class MessagesService {
   }
 
   /* This is for private messages feature */
-  sendPrivateMessage(PrivateMessages: PrivateMessagesInterface) {
-
+  savePrivateMessageToDB(PrivateMessage: PrivateMessagesInterface): Observable<any> {
+    return this._http.post(`${this.apiUrl}privateMessages`, PrivateMessage, { headers: this.headers })
+        .map((response: Response) => response)
+        .catch(this.handleError);
   }
 
   //This is not finished
@@ -125,11 +130,55 @@ export class MessagesService {
           .catch(this.handleError);
   }
 
+  sendPrivateInvitation(privateInvitation: PrivateMessagesInterface) {
+    console.log('id: ', privateInvitation);
+    this.socket.emit('sendPrivateInvitation', 
+      {'idSockedTo': privateInvitation.idSockedTo, 'idSockedFrom': privateInvitation.idSockedFrom,'room': privateInvitation.room});
+  }
+
+  receiveRooms(){
+    if(!this.checked){
+      console.log('Here I am');
+      this.socket.on('receiveRooms', (data) => {
+        if(typeof this.localArrayRooms !== 'undefined' && this.localArrayRooms.length > 0){
+          if(this.localArrayRooms.indexOf(data) >= 0) {
+              console.log(this.localArrayRooms);
+          }else {
+              this.localArrayRooms.push(data);
+              this.userJoinTo(data);
+              //this.socket.emit('joinToRoom', data);
+              console.log(this.localArrayRooms);
+          }
+        }else{
+          this.localArrayRooms.push(data);
+          this.userJoinTo(data);
+          //this.socket.emit('joinToRoom', data);
+          console.log('empty', this.localArrayRooms);
+        }
+      });
+      this.checked = true;
+    }
+  }
+
+  userJoinTo(room: string){
+    //this.socket.emit('joinTo', room);
+    console.log('user has Join to: ', room);
+  }
+
+  newMessagePrivate(): Observable<any>{
+    let observable = new Observable(observer => {
+        this.socket.on('new message', (data: MessageInterface) => {
+            observer.next(data);
+        });
+    });
+    return observable;
+  }
+
   getSocketObject() : Socket {
     return this.socket;
   }
 
-  createObservableString() : Observable<string> {
+  createObservableString(): Observable<string> {
       return new Observable<string>(observer => {
         this.observerMessage = observer;
       });
