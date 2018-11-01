@@ -18,7 +18,7 @@ import { RegisterComponent } from '../register/register.component';
     `],
     template: 
     `
-    <ion-header [className]="'tool-bar'">
+    <ion-header>
         <ion-toolbar>
             <ion-title *ngIf="logged === true">Send a message to...</ion-title>
             <ion-title *ngIf="logged === false">Login...</ion-title>            
@@ -347,8 +347,8 @@ export class MessagesContactPage {
         </ion-card>
 
         <ion-list>
-            <ion-item *ngFor="let _message of private_messages">
-                <strong>{{_message.nickname}}</strong>: <span text-wrap> {{_message.message}} </span>
+            <ion-item *ngFor="let _privateMessage of _privateMessages">
+                <strong>{{_privateMessage.idFrom}}</strong>: <span text-wrap> {{_privateMessage.message}} </span>
             </ion-item>
         </ion-list>
 
@@ -377,6 +377,7 @@ export class MessagesContactPage {
     `
 })
 export class PrivateMessageModal implements OnInit {
+    @ViewChild(Content) content: Content;
     receiver: UserInterface;
     userLogged: UserInterface;
     privateMessage: string;
@@ -384,6 +385,8 @@ export class PrivateMessageModal implements OnInit {
     private_messages: PrivateMessagesInterface[] = [];
     messagesLoading = true;
     roomsArray = ['rooms'];
+    _privateMessages: PrivateMessagesInterface[] = [];
+    subscriberPrivateMessages: Subscription = new Subscription;
 
     message: PrivateMessagesInterface = {
         room: '',
@@ -421,26 +424,37 @@ export class PrivateMessageModal implements OnInit {
         this.message.idSockedTo = this.receiver.id;
         this.message.idSockedFrom = this.userLogged.id;
         this.messageService.sendPrivateInvitation(this.message);
+        this.subscriberPrivateMessages = this.messageService.getPrivateMessages(this.message.room)
+            .subscribe(privateMessagesResponse => {
+                this.messageService.messagesAndRooms.rooms[`${this.message.room}`] = privateMessagesResponse;
+                console.log(privateMessagesResponse);
+                this._privateMessages = this.messageService.messagesAndRooms.rooms[`${this.message.room}`];
+            });
 
     }
 
     onSubmitPrivateMessage(){
         this.message.message = this.privateMessage;
+        this.messageService.sendPrivateMessage(this.message);
         this.messageService.savePrivateMessageToDB(this.message)
         .subscribe(result => {
             console.log('onSubmitPrivate result', result);
         });
+        console.log(this.message);
+        
         this.privateMessage = '';
+        this.messageService.sendPrivateMessage;
     }
 
+
     checkRoom(sender: string, receiver: string){
-        let formatRoom = `${sender}&${receiver}`;
+        let formatRoom = `${sender}-${receiver}`;
         if(typeof this.messageService.localArrayRooms !== 'undefined' && this.messageService.localArrayRooms.length > 0){
             if(this.messageService.localArrayRooms.indexOf(formatRoom) >= 0) {
                 console.log('f1');
                 this.message.room = formatRoom;
-            }else if(this.messageService.localArrayRooms.indexOf(`${receiver}&${sender}`) >= 0){
-                this.message.room = `${receiver}&${sender}`;
+            }else if(this.messageService.localArrayRooms.indexOf(`${receiver}-${sender}`) >= 0){
+                this.message.room = `${receiver}-${sender}`;
                 console.log('f2');
             }else {
                 console.log('f3');
@@ -448,6 +462,7 @@ export class PrivateMessageModal implements OnInit {
                 this.messageService.localArrayRooms.push(this.message.room);
                 console.log('saved', this.messageService.localArrayRooms);
                 this.messageService.userJoinTo(this.message.room);
+                this.messageService.createSubscriptionToChannel(this.message.room);
             }
         }else{
             console.log('f4');
@@ -455,12 +470,19 @@ export class PrivateMessageModal implements OnInit {
             this.messageService.localArrayRooms.push(this.message.room);
             console.log('saved', this.messageService.localArrayRooms);
             this.messageService.userJoinTo(this.message.room);
+            this.messageService.createSubscriptionToChannel(this.message.room);
         }
         //Create a new room in the data base and add it to the roomArray
     }
 
+    //Move to general or service
+
     dismiss() {
         this.viewCtrl.dismiss();
+    }
+
+    ngOnDestroy(){
+        //this.subscriberPrivateMessages.unsubscribe();
     }
 
 }
