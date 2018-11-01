@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Response } from '@angular/http';
 import { Observable } from 'rxjs/Observable';
 import { Observer } from 'rxjs/Observer';
+import { Subscription } from 'rxjs';
 import 'rxjs/add/operator/map';
 import 'rxjs/add/operator/catch';
 import { ConfigService } from './config.service';
@@ -10,14 +11,9 @@ import * as io from 'socket.io-client';
 import { Socket } from './socket.interface';
 import { MessageInterface } from './message.interface';
 import { PrivateMessagesInterface } from './privateMessages.interface';
+//import { PrivateMessageModal } from './components/messages/messages.component';
 
-// Esto es un hack para que funcione rollup
 var ioFunc = (io as any).default ? (io as any).default : io;
- 
-// Esto era lo que original estaba antes del hack (io en vez de _io)
-// declare var _io : {
-//   connect(url: string): Socket;
-// };
 
 @Injectable()
 export class MessagesService {
@@ -28,14 +24,39 @@ export class MessagesService {
   headers: HttpHeaders;
   apiUrl: string;
   localArrayRooms: Array<string> = [];
-  count = 1;
   checked = false;
+  arrayOther :any = [{}];
+  arraySubscribersPrivateMessages: Subscription = new Subscription;
+  messagesAndRooms: any = { rooms: {} };
 
   constructor(
     public configService: ConfigService,
     private _http: HttpClient){
+    //This code is the example of how to add dynamically values to an JSON Object
+    // var jsonObj: any = { 
+    //   rooms: 
+    //     {
+    //       victor: [
+    //         {
+    //           message: 'hell',
+    //           from: 'Manuel',
+    //           to: 'maria'
+    //         }
+    //       ]
+    //     }
+    // }
+    // var newUser = "Juanita";  
+    // console.log(jsonObj.rooms.victor);
+    // jsonObj.rooms.victor.push({message: 'hssll', from: 'Manuel', to: 'Laria'});
+    // console.log(jsonObj.rooms.victor);
+    // jsonObj.rooms[`${newUser}`] = [];
+    // jsonObj.rooms[`${newUser}`].push({message: '1212', from: 'Manuel', to: 'YES!!'});
+    // console.log(jsonObj);
+    // this.arrayOther = jsonObj.rooms['victor'];
+    // for(let i = 0; i < this.arrayOther.length; i++){
+    //   console.log(this.arrayOther[i].message);
+    // }
 
-    // Después de aplicar hack se cambio de (socketIo a ioFunc)
     this.socket = ioFunc(configService.wsUrl);
 
     this.headers = new HttpHeaders();
@@ -116,10 +137,19 @@ export class MessagesService {
           .catch(this.handleError);
   }
 
+  /*########################################*/
   /* This is for private messages feature */
+  /*########################################*/
   savePrivateMessageToDB(PrivateMessage: PrivateMessagesInterface): Observable<any> {
     return this._http.post(`${this.apiUrl}privateMessages`, PrivateMessage, { headers: this.headers })
         .map((response: Response) => response)
+        .catch(this.handleError);
+  }
+
+  getPrivateMessages(room: any) : Observable<any[]> {
+    //Here gets the messages from loopback
+    return this._http.get(`${this.apiUrl}privateMessages?filter[where][room]=${room}`, { headers: this.headers })
+        .map((response: any) => response)
         .catch(this.handleError);
   }
 
@@ -132,27 +162,30 @@ export class MessagesService {
 
   sendPrivateInvitation(privateInvitation: PrivateMessagesInterface) {
     console.log('id: ', privateInvitation);
-    this.socket.emit('sendPrivateInvitation', 
-      {'idSockedTo': privateInvitation.idSockedTo, 'idSockedFrom': privateInvitation.idSockedFrom,'room': privateInvitation.room});
+    this.socket.emit(
+      'sendPrivateInvitation', 
+      {
+        'idSockedTo': privateInvitation.idSockedTo, 
+        'idSockedFrom': privateInvitation.idSockedFrom, 
+        'room': privateInvitation.room
+      }
+    );
   }
 
   receiveRooms(){
     if(!this.checked){
-      console.log('Here I am');
       this.socket.on('receiveRooms', (data) => {
         if(typeof this.localArrayRooms !== 'undefined' && this.localArrayRooms.length > 0){
           if(this.localArrayRooms.indexOf(data) >= 0) {
               console.log(this.localArrayRooms);
           }else {
               this.localArrayRooms.push(data);
-              this.userJoinTo(data);
-              //this.socket.emit('joinToRoom', data);
+              this.createSubscriptionToChannel(data);
               console.log(this.localArrayRooms);
           }
         }else{
           this.localArrayRooms.push(data);
-          this.userJoinTo(data);
-          //this.socket.emit('joinToRoom', data);
+          this.createSubscriptionToChannel(data);
           console.log('empty', this.localArrayRooms);
         }
       });
@@ -160,19 +193,60 @@ export class MessagesService {
     }
   }
 
-  userJoinTo(room: string){
-    //this.socket.emit('joinTo', room);
+  userJoinTo(room: string): Observable<any>{
+    this.socket.emit('userJoinTo', room);
     console.log('user has Join to: ', room);
+    return this.chanelWatcher();
   }
 
-  newMessagePrivate(): Observable<any>{
+  chanelWatcher(): Observable <any>{
     let observable = new Observable(observer => {
-        this.socket.on('new message', (data: MessageInterface) => {
-            observer.next(data);
-        });
+      this.socket.on('chat room', (data: PrivateMessagesInterface) => {
+          observer.next(data);
+          console.log('lllooooooppppp');
+          //this.scrollDown();
+          // try {
+          //   setTimeout(() => {
+          //     this.PrivateMessageModal.nativeElement.scrollTop = this.messageContainer.nativeElement.scrollHeight;
+          //   }, 100);
+          // } catch (error) {
+          //   console.warn(error);
+          // }
+      });
     });
     return observable;
   }
+
+  // scrollDown(){
+  //   setTimeout(() => {
+  //           PrivateMessageModal.prototype.content.ionScrollEnd;
+  //   }, 850);
+  // }
+
+  sendPrivateMessage(privateMessage: PrivateMessagesInterface){
+    this.socket.emit('newPrivateMessage', privateMessage);
+    console.log(`Private message: ${privateMessage.room}: `, privateMessage);
+  }
+
+  createSubscriptionToChannel(room: string){
+    //Save messages from socked.io, new_message
+    this.messagesAndRooms.rooms[`${room}`] = [];
+    this.arraySubscribersPrivateMessages.add(this.userJoinTo(room)
+    .subscribe(new_message => {
+        this.messagesAndRooms.rooms[`${room}`].push(new_message);
+        console.log('This is the firebase: ', this.messagesAndRooms);
+    }));
+  }
+
+  // Not finished and may be not needed
+  // newMessagePrivate(): Observable<any>{
+  //   let observable = new Observable(observer => {
+  //       this.socket.on('new message', (data: MessageInterface) => {
+  //           observer.next(data);
+  //       });
+  //   });
+  //   return observable;
+  // }
 
   getSocketObject() : Socket {
     return this.socket;
