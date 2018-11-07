@@ -28,6 +28,8 @@ export class MessagesService {
   arrayOther :any = [{}];
   arraySubscribersPrivateMessages: Subscription = new Subscription;
   messagesAndRooms: any = { rooms: {} };
+  counter = 0;
+  ok2: any;
 
   constructor(
     public configService: ConfigService,
@@ -129,9 +131,8 @@ export class MessagesService {
         .catch(this.handleError);
   }
   
+  //Here gets the messages from loopback
   getMessages() : Observable<string[]> {
-      //Here gets the messages from loopback
-      //io.connect();
       return this._http.get(`${this.apiUrl}messages`, { headers: this.headers })
           .map((response: any) => response)
           .catch(this.handleError);
@@ -146,8 +147,8 @@ export class MessagesService {
         .catch(this.handleError);
   }
 
+  //Here gets the messages from loopback
   getPrivateMessages(room: any) : Observable<any[]> {
-    //Here gets the messages from loopback
     return this._http.get(`${this.apiUrl}privateMessages?filter[where][room]=${room}`, { headers: this.headers })
         .map((response: any) => response)
         .catch(this.handleError);
@@ -181,12 +182,10 @@ export class MessagesService {
           }else {
               this.localArrayRooms.push(data);
               this.createSubscriptionToChannel(data);
-              console.log(this.localArrayRooms);
           }
         }else{
           this.localArrayRooms.push(data);
           this.createSubscriptionToChannel(data);
-          console.log('empty', this.localArrayRooms);
         }
       });
       this.checked = true;
@@ -203,7 +202,7 @@ export class MessagesService {
     let observable = new Observable(observer => {
       this.socket.on('chat room', (data: PrivateMessagesInterface) => {
           observer.next(data);
-          console.log('lllooooooppppp');
+          console.log('lllooooooppppp', data);
           //this.scrollDown();
           // try {
           //   setTimeout(() => {
@@ -225,7 +224,6 @@ export class MessagesService {
 
   sendPrivateMessage(privateMessage: PrivateMessagesInterface){
     this.socket.emit('newPrivateMessage', privateMessage);
-    console.log(`Private message: ${privateMessage.room}: `, privateMessage);
   }
 
   createSubscriptionToChannel(room: string){
