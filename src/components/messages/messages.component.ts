@@ -407,9 +407,7 @@ export class PrivateMessageModal implements OnInit {
         public formBuilder: FormBuilder,
         private messageService: MessagesService) {
             this.receiver = this.navParams.get('to');
-            console.log('To: ', this.receiver);
             this.userLogged = this.navParams.get('from');
-            console.log('From: ', this.userLogged);
             this.checkRoom(this.userLogged.username, this.receiver.username);
             console.log('Rooms available: ', this.messageService.localArrayRooms);
     }
@@ -446,10 +444,10 @@ export class PrivateMessageModal implements OnInit {
         .subscribe(result => {
             console.log('onSubmitPrivate result', result);
         });
-        console.log(this.message);
+        //console.log(this.message);
         
         this.privateMessage = '';
-        this.messageService.sendPrivateMessage;
+        //this.messageService.sendPrivateMessage;
     }
 
 
@@ -476,8 +474,6 @@ export class PrivateMessageModal implements OnInit {
         this.viewCtrl.dismiss();
     }
 
-    ngOnDestroy(){
-        this.messageService.arraySubscribersPrivateMessages.unsubscribe();
-    }
+
 
 }
