@@ -25,7 +25,7 @@ export class MessagesService {
   apiUrl: string;
   localArrayRooms: Array<string> = [];
   checked = false;
-  arrayOther :any = [{}];
+  //arrayOther :any = [{}];
   arraySubscribersPrivateMessages: Subscription = new Subscription;
   messagesAndRooms: any = { rooms: {} };
   counter = 0;
@@ -54,9 +54,9 @@ export class MessagesService {
     // jsonObj.rooms[`${newUser}`] = [];
     // jsonObj.rooms[`${newUser}`].push({message: '1212', from: 'Manuel', to: 'YES!!'});
     // console.log(jsonObj);
-    // this.arrayOther = jsonObj.rooms['victor'];
-    // for(let i = 0; i < this.arrayOther.length; i++){
-    //   console.log(this.arrayOther[i].message);
+    // this.// = jsonObj.rooms['victor'];
+    // for(let i = 0; i < this.//.length; i++){
+    //   console.log(this.//[i].message);
     // }
 
     this.socket = ioFunc(configService.wsUrl);
@@ -231,7 +231,7 @@ export class MessagesService {
     this.messagesAndRooms.rooms[`${room}`] = [];
     this.arraySubscribersPrivateMessages.add(this.userJoinTo(room)
     .subscribe(new_message => {
-        this.messagesAndRooms.rooms[`${room}`].push(new_message);
+        this.messagesAndRooms.rooms[`${new_message.room}`].push(new_message);
         console.log('This is the firebase: ', this.messagesAndRooms);
     }));
   }
