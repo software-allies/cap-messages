@@ -161,6 +161,12 @@ export class MessagesComponent {
         //Add all the rooms
         this.messageService.receiveRooms();
         //Private messages
+        // this.privateMessagesSubscriber = this.messageService.receivePrivateMessages()
+        //     .subscribe(new_message => {
+        //         this.messageService.messagesAndRooms.rooms[`${new_message.room}`] = [];
+        //         this.messageService.messagesAndRooms.rooms[`${new_message.room}`].push(new_message);
+        //         console.log('This is the firebase: ', this.messageService.messagesAndRooms);
+        //     });
         // this.privateMessagesSubscriber.add(this.messageService.chanelWatcher().subscribe(new_message => {
         //     this.messageService.messagesAndRooms.rooms[`${room}`].push(new_message);
         //     console.log('This is the firebase: ', this.messageService.messagesAndRooms);
@@ -473,7 +479,5 @@ export class PrivateMessageModal implements OnInit {
     dismiss() {
         this.viewCtrl.dismiss();
     }
-
-
 
 }
