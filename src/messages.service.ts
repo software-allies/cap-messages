@@ -25,6 +25,7 @@ export class MessagesService {
   apiUrl: string;
   localArrayRooms: Array<string> = [];
   checked = false;
+  chanelOpen = false;
   //arrayOther :any = [{}];
   arraySubscribersPrivateMessages: Subscription = new Subscription;
   messagesAndRooms: any = { rooms: {} };
@@ -192,35 +193,21 @@ export class MessagesService {
     }
   }
 
-  userJoinTo(room: string): Observable<any>{
+  userJoinTo(room: string){
     this.socket.emit('userJoinTo', room);
     console.log('user has Join to: ', room);
-    return this.chanelWatcher();
+    //return this.chanelWatcher();
   }
 
   chanelWatcher(): Observable <any>{
     let observable = new Observable(observer => {
-      this.socket.on('chat room', (data: PrivateMessagesInterface) => {
-          observer.next(data);
-          console.log('lllooooooppppp', data);
-          //this.scrollDown();
-          // try {
-          //   setTimeout(() => {
-          //     this.PrivateMessageModal.nativeElement.scrollTop = this.messageContainer.nativeElement.scrollHeight;
-          //   }, 100);
-          // } catch (error) {
-          //   console.warn(error);
-          // }
-      });
+        this.socket.on('chat room', (data: PrivateMessagesInterface) => {
+            observer.next(data);
+            console.log('lllooooooppppp', data);
+        });
     });
     return observable;
   }
-
-  // scrollDown(){
-  //   setTimeout(() => {
-  //           PrivateMessageModal.prototype.content.ionScrollEnd;
-  //   }, 850);
-  // }
 
   sendPrivateMessage(privateMessage: PrivateMessagesInterface){
     this.socket.emit('newPrivateMessage', privateMessage);
@@ -229,22 +216,17 @@ export class MessagesService {
   createSubscriptionToChannel(room: string){
     //Save messages from socked.io, new_message
     this.messagesAndRooms.rooms[`${room}`] = [];
-    this.arraySubscribersPrivateMessages.add(this.userJoinTo(room)
-    .subscribe(new_message => {
-        this.messagesAndRooms.rooms[`${new_message.room}`].push(new_message);
-        console.log('This is the firebase: ', this.messagesAndRooms);
-    }));
-  }
+    this.userJoinTo(room);
+    if(this.chanelOpen == false){
 
-  // Not finished and may be not needed
-  // newMessagePrivate(): Observable<any>{
-  //   let observable = new Observable(observer => {
-  //       this.socket.on('new message', (data: MessageInterface) => {
-  //           observer.next(data);
-  //       });
-  //   });
-  //   return observable;
-  // }
+      this.arraySubscribersPrivateMessages = this.chanelWatcher()
+      .subscribe(new_message => {
+          this.messagesAndRooms.rooms[`${new_message.room}`].push(new_message);
+          console.log('This is the firebase: ', this.messagesAndRooms);
+      });
+      this.chanelOpen = true;
+    }
+  }
 
   getSocketObject() : Socket {
     return this.socket;
