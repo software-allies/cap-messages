@@ -150,8 +150,7 @@ export class MessagesComponent {
         //Save users
         this.subscribeUsers = this.messageService.getUsers()
             .subscribe(users => {
-                this._users = users;
-                console.log(this._users);
+                this.messageService.usersConnected = users;
             });
         //This works to get the user id
         this.subscribeId = this.messageService.getUserId()
@@ -220,13 +219,8 @@ export class MessagesComponent {
 
 
     lookPerson() {
-        console.log('This is my id', this.myID);
-        this.navCtrl.push(MessagesContactPage, { users: JSON.stringify(this._users), userLogged: this.userLogged });
+        this.navCtrl.push(MessagesContactPage, { userLogged: this.userLogged });
         this.subscribeId.unsubscribe();
-    }
-
-    getUsers() {
-        return this._users;
     }
 
     ngOnDestroy() {
@@ -275,18 +269,27 @@ export class MessagesComponent {
   })
 export class MessagesContactPage { 
 
-    users: UserInterface;
+    users: any[];
     userLogged: UserInterface;
-    // 
+    subscribeUsers: Subscription = new Subscription; 
     constructor(
         public navCtrl: NavController, 
         public navParams: NavParams,
-        public modalCtrl: ModalController,) 
+        public modalCtrl: ModalController,
+        private messageService: MessagesService) 
     {
-        this.users = JSON.parse(navParams.get('users'));
+        this.users = this.messageService.usersConnected;
         this.userLogged = navParams.get('userLogged');
         console.log('Users Array: ', this.users);
-        console.log('this user logged: ', this.userLogged);
+    }
+
+    ngOnInit(): void {
+        
+        this.subscribeUsers = this.messageService.getUsers()
+        .subscribe(users => {
+            this.users = users;
+            console.log('HERE!: ', this.users);
+        });
     }
 
     presentModal(user: string) {
@@ -447,13 +450,9 @@ export class PrivateMessageModal implements OnInit {
         this.message.message = this.privateMessage;
         this.messageService.sendPrivateMessage(this.message);
         this.messageService.savePrivateMessageToDB(this.message)
-        .subscribe(result => {
-            console.log('onSubmitPrivate result', result);
-        });
-        //console.log(this.message);
+        .subscribe();
         
         this.privateMessage = '';
-        //this.messageService.sendPrivateMessage;
     }
 
 
