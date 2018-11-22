@@ -29,8 +29,8 @@ export class MessagesService {
   //arrayOther :any = [{}];
   arraySubscribersPrivateMessages: Subscription = new Subscription;
   messagesAndRooms: any = { rooms: {} };
-  counter = 0;
-  ok2: any;
+  usersConnected: string[] = [];
+  
 
   constructor(
     public configService: ConfigService,
@@ -70,8 +70,8 @@ export class MessagesService {
   }
 
   sendMessage(message: MessageInterface){
-      //Here sends a message y saves that message in loopback
-      this.socket.emit('send message', message);
+    //Here sends a message y saves that message in loopback
+    this.socket.emit('send message', message);
   }
   
   newMessage(): Observable<any>{
