@@ -9,6 +9,6 @@ This module is divided in two main codes, which are the main code of the module 
 - [ ] Authentication service.
 - [x] General messages in real time.
 - [x] List of users connected.
-- [ ] Private messages in real time.
+- [x] Private messages in real time.
 
 At this moment this is still in development.
